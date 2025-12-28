@@ -14,7 +14,7 @@ export const formatDate = (dateString) => {
 };
 
 // Check if task is overdue
-export const isOverdue = (dueDate, status) => {
+export const dueDate = (dueDate, status) => {
   if (status === 'done' || !dueDate) return false;
   return new Date(dueDate) < new Date();
 };
