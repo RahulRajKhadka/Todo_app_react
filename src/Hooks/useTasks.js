@@ -24,7 +24,6 @@ export const useTasks = () => {
     }
   };
 
-  // Create task
   const createTask = useCallback(async (taskData) => {
     try {
       const newTask = await taskAPI.createTask(taskData);
@@ -36,7 +35,7 @@ export const useTasks = () => {
     }
   }, []);
 
-  // Update task
+  
   const updateTask = useCallback(async (id, updates) => {
     try {
       const updatedTask = await taskAPI.updateTask(id, updates);
@@ -48,7 +47,7 @@ export const useTasks = () => {
     }
   }, []);
 
-  // Delete task
+
   const deleteTask = useCallback(async (id) => {
     try {
       await taskAPI.deleteTask(id);
@@ -59,6 +58,20 @@ export const useTasks = () => {
     }
   }, []);
 
+
+  const toggleTaskStatus = useCallback(async (id) => {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) throw new Error('Task not found');
+      
+      const newStatus = task.status === 'pending' ? 'done' : 'pending';
+      return await updateTask(id, { status: newStatus });
+    } catch (err) {
+      setError("Failed to toggle task status");
+      throw err;
+    }
+  }, [tasks, updateTask]);
+
   return {
     tasks,
     loading,
@@ -66,6 +79,7 @@ export const useTasks = () => {
     createTask,
     updateTask,
     deleteTask,
+    toggleTaskStatus, 
     refreshTasks: loadTasks,
   };
 };

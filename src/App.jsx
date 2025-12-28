@@ -1,112 +1,162 @@
-import React, { useState } from 'react';
-import TaskItem from "./Componenets/TaskItems.jsx";
-import TaskForm from "./Componenets/TaskForm.jsx"
-import EmptyState from "./Componenets/EmptyState.jsx"
-
+import React, { useState, useMemo } from 'react';
+import { Plus, Loader } from 'lucide-react';
+import TaskForm from './Componenets/TaskForm.jsx';
+import TaskList from './Componenets/TaskList.jsx'
+import FilterBar from './Componenets/FilterBar.jsx';
+import { useTasks } from "./Hooks/useTasks.js"
+import { useDebounce } from './Hooks/useDbounce.js';
+import { filterTasks, sortTasks } from './utils/helpers.js';
 
 function App() {
-  const [tasks, setTasks] = useState([
-    { id: '1', title: 'Buy groceries', description: 'Milk, Eggs, Bread', dueDate: '2024-12-25', status: 'pending' },
-    { id: '2', title: 'Finish project', dueDate: '2023-01-01', status: 'pending' },
-  ]);
+  const { 
+    tasks, 
+    loading, 
+    error, 
+    createTask, 
+    updateTask, 
+    deleteTask, 
+    refreshTasks 
+  } = useTasks();
   
-  const [showForm, setShowForm] = useState(false);
-  const [filter, setFilter] = useState('all'); 
-  const [search, setSearch] = useState(''); // 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('date-asc');
 
-  const handleAddTask = (newTask) => {
-    const taskWithId = {
-      ...newTask,
-      id: Date.now().toString(),
-      status: 'pending'
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  const taskCounts = useMemo(() => {
+    return {
+      all: tasks.length,
+      pending: tasks.filter(t => t.status === 'pending').length,
+      done: tasks.filter(t => t.status === 'done').length
     };
-    setTasks([...tasks, taskWithId]);
-    setShowForm(false);
+  }, [tasks]);
+
+  const displayedTasks = useMemo(() => {
+    const filtered = filterTasks(tasks, filter, debouncedSearch);
+    return sortTasks(filtered, sortBy);
+  }, [tasks, filter, debouncedSearch, sortBy]);
+
+  const handleFormSubmit = async (taskData) => {
+    try {
+      if (editingTask) {
+        await updateTask(editingTask.id, taskData);
+      } else {
+        await createTask(taskData);
+      }
+    } catch (err) {
+      console.error('Error saving task:', err);
+      alert('Failed to save task. Please try again.');
+    }
   };
 
   const handleEdit = (task) => {
-    console.log('Edit task:', task);
+    setEditingTask(task);
+    setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    setTasks(tasks.filter(t => t.id !== id));
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        await deleteTask(id);
+      } catch (err) {
+        alert('Failed to delete task.', err);
+      }
+    }
   };
 
-  // Filter tasks based on filter and search
-  const filteredTasks = tasks.filter(task => {
-    if (filter !== 'all' && task.status !== filter) return false;
-    if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const handleToggleStatus = async (id) => {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      const newStatus = task.status === 'pending' ? 'done' : 'pending';
+      await updateTask(id, { status: newStatus });
+    } catch (err) {
+      console.error('Error toggling status:', err);
+    }
+  };
 
-  return (
-    <div className="min-h-screen bg-blue-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Task Tracker</h1>
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingTask(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto" />
+          <p className="mt-4 text-gray-600">Loading tasks...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow">
+          <p className="text-red-600 text-lg">{error}</p>
+          <button 
+            onClick={refreshTasks}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Add Task
+            Retry
           </button>
         </div>
+      </div>
+    );
+  }
 
-        {/* Search Input */}
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-          />
-          
-          {/*  Filter Buttons */}
-          <div className="flex gap-2">
-            {['all', 'pending', 'done'].map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-lg ${
-                  filter === f ? 'bg-blue-600 text-white' : 'bg-gray-200'
-                }`}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
+  return (
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Task Tracker</h1>
+              <p className="text-gray-600 mt-1">Manage your tasks efficiently</p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Task</span>
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Task Form Modal */}
-        {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <TaskForm 
-              onSubmit={handleAddTask} 
-              onClose={() => setShowForm(false)} 
-            />
-          </div>
-        )}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <FilterBar
+          filter={filter}
+          setFilter={setFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          taskCounts={taskCounts}
+        />
 
-        {/* EmptyState or Task List */}
-        {filteredTasks.length === 0 ? (
-          <EmptyState searchQuery={search} filter={filter} />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTasks.map(task => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
+        <TaskForm
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onSubmit={handleFormSubmit}
+          editingTask={editingTask}
+        />
 
-
-      </div>
+        <TaskList
+          tasks={displayedTasks}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
+          searchQuery={debouncedSearch}
+          filter={filter}
+        />
+      </main>
     </div>
   );
 }

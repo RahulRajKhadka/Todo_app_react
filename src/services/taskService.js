@@ -1,11 +1,6 @@
-
 const DELAY = 500;
-
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-
 const STORAGE_KEY = 'task_tracker_tasks';
-
 
 const getTasksFromStorage = () => {
   try {
@@ -17,7 +12,6 @@ const getTasksFromStorage = () => {
   }
 };
 
-
 const saveTasksToStorage = (tasks) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -26,28 +20,23 @@ const saveTasksToStorage = (tasks) => {
   }
 };
 
-
 export const taskAPI = {
-  // Get all tasks
   getTasks: async () => {
     await delay(DELAY);
     return getTasksFromStorage();
   },
-
 
   createTask: async (task) => {
     await delay(DELAY);
     const tasks = getTasksFromStorage();
     const newTask = {
       ...task,
-      id: task.id,
       createdAt: new Date().toISOString()
     };
     tasks.push(newTask);
     saveTasksToStorage(tasks);
     return newTask;
   },
-
 
   updateTask: async (id, updates) => {
     await delay(DELAY);
@@ -60,7 +49,6 @@ export const taskAPI = {
     return tasks[index];
   },
 
- 
   deleteTask: async (id) => {
     await delay(DELAY);
     const tasks = getTasksFromStorage();
