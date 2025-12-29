@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Edit2, Trash2, Check, Clock } from 'lucide-react';
 import { formatDate, isOverdue } from "../utils/helpers.js"
 
-const TaskItem = ({ task, onEdit, onDelete, onToggleStatus }) => {
+const TaskItem = ({ task, onEdit, onDelete, onToggleStatus,isLoading=false }) => {
   const overdue = isOverdue(task.dueDate, task.status); 
 
   return (
@@ -55,6 +55,7 @@ const TaskItem = ({ task, onEdit, onDelete, onToggleStatus }) => {
         <div className="flex gap-2 flex-shrink-0">
           <button
             onClick={() => onEdit(task)}
+            disabled={isLoading}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             title="Edit task"
           >
@@ -62,6 +63,7 @@ const TaskItem = ({ task, onEdit, onDelete, onToggleStatus }) => {
           </button>
           <button
             onClick={() => onDelete(task.id)}
+            disabled={isLoading}
             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             title="Delete task"
           >

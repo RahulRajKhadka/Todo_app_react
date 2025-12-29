@@ -1,21 +1,30 @@
-import React from 'react';
-import TaskItem from "./TaskItems.jsx"
-import EmptyState from './EmptyState.jsx';
+import React from "react";
+import TaskItem from "./TaskItems";
+import EmptyState from "./EmptyState";
 
-const TaskList = ({ tasks, onEdit, onDelete, onToggleStatus, searchQuery, filter }) => {
+const TaskList = ({
+  tasks,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+  searchQuery,
+  filter,
+  isLoading = false,
+}) => {
   if (tasks.length === 0) {
     return <EmptyState searchQuery={searchQuery} filter={filter} />;
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {tasks.map(task => (
+      {tasks.map((task) => (
         <TaskItem
           key={task.id}
           task={task}
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleStatus={onToggleStatus}
+          isLoading={isLoading}
         />
       ))}
     </div>

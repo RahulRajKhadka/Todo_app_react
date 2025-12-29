@@ -1,40 +1,42 @@
-import React from 'react';
-import { Search } from 'lucide-react';
+import React from "react";
+import { Search } from "lucide-react";
 
-const FilterBar = ({ 
-  filter, 
-  setFilter, 
-  searchQuery, 
-  setSearchQuery, 
-  sortBy, 
+const FilterBar = ({
+  filter,
+  setFilter,
+  searchQuery,
+  setSearchQuery,
+  sortBy,
   setSortBy,
-  taskCounts 
+  taskCounts,
+  isLoading = false,
 }) => {
   const filterOptions = [
-    { value: 'all', label: 'All', count: taskCounts.all },
-    { value: 'pending', label: 'Pending', count: taskCounts.pending },
-    { value: 'done', label: 'Done', count: taskCounts.done }
+    { value: "all", label: "All", count: taskCounts.all },
+    { value: "pending", label: "Pending", count: taskCounts.pending },
+    { value: "done", label: "Done", count: taskCounts.done },
   ];
 
   const sortOptions = [
-    { value: 'date-asc', label: 'Due Date (Earliest)' },
-    { value: 'date-desc', label: 'Due Date (Latest)' },
-    { value: 'name-asc', label: 'Name (A-Z)' },
-    { value: 'name-desc', label: 'Name (Z-A)' }
+    { value: "date-asc", label: "Due Date (Earliest)" },
+    { value: "date-desc", label: "Due Date (Latest)" },
+    { value: "name-asc", label: "Name (A-Z)" },
+    { value: "name-desc", label: "Name (Z-A)" },
   ];
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
       {/* Filter Buttons */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {filterOptions.map(option => (
+        {filterOptions.map((option) => (
           <button
             key={option.value}
             onClick={() => setFilter(option.value)}
+            disabled={isLoading}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               filter === option.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {option.label} ({option.count})
@@ -60,9 +62,10 @@ const FilterBar = ({
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
+          disabled={isLoading}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
-          {sortOptions.map(option => (
+          {sortOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
